@@ -13,8 +13,7 @@ WHERE apple.name IS NOT NULL;*/
 revenue - initial_cost - recurring_cost AS revenue_minus_cost
 
 */
-
-
+ 
 SELECT apple.name AS apple_apps, apple.rating, android.name AS android_apps, android.rating 
 FROM (SELECT * from app_store_apps) AS apple
 full join play_store_apps as android
