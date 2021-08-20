@@ -49,7 +49,7 @@ full join play_store_apps as android
 where apple.name is not null and apple.rating is not null and android.name is not null and android.rating is not null) as eval
 where weighted_rev_count <500000
 order by profit desc;
-
+ 
 SELECT apple.name AS apple_apps,
 	android.name AS android_apps,
 CAST(2500*(12*(1+(2*round(apple.rating/5,1)*5)) + 12*(1+(2*round(android.rating/5,1)*5))) -
