@@ -14,20 +14,26 @@ revenue - initial_cost - recurring_cost AS revenue_minus_cost
 
 */
  
-SELECT apple.name AS apple_apps, apple.rating, android.name AS android_apps, android.rating 
+SELECT apple.name AS apple_apps, apple.rating, android.name AS android_apps, android.rating, 
 FROM (SELECT * from app_store_apps) AS apple
 full join play_store_apps as android
 on apple.name = android.name
 WHERE apple.name IS NOT NULL;
 
+/*
+Vamsi modified code
 SELECT
-	apple_apps as app_in_both_stores, apple_rating, android_rating, apple_price, android_price, trunc(weighted_rev_count) as weighted_rev_count, cast(lifespan_mos as int) as lifespan_mos, cast(gross as money) as gross,
+	apple_apps as app_in_both_stores, apple_rating, android_rating, apple_price, android_price, 
+	apple_genre, android_genre, apple_content_rating, play_content_rating,
+	trunc(weighted_rev_count) as weighted_rev_count, 
+	cast(lifespan_mos as int) as lifespan_mos, cast(gross as money) as gross,
 	cast(ad_cost as money) as ad_cost, cast(apple_purchase_cost as money) as apple_purchase_cost,
 	cast(android_purchase_cost as money) as android_purchase_cost,
 	cast(gross - ad_cost - apple_purchase_cost - android_purchase_cost as money) as profit
 FROM
 (SELECT
 	apple.name AS apple_apps, coalesce(apple.rating,0) as apple_rating, apple.price as apple_price,
+ 	apple.primary_genre AS apple_genre, android.genres AS android_genre, apple.content_rating AS apple_content_rating, android.content_rating AS play_content_rating,
 	android.name AS android_apps, coalesce(android.rating,0) as android_rating, cast(replace(android.price,'$','') as numeric) as android_price,
  	((cast(apple.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
  	* cast(apple.review_count as numeric))
@@ -49,7 +55,10 @@ full join play_store_apps as android
 where apple.name is not null and apple.rating is not null and android.name is not null and android.rating is not null) as eval
 where weighted_rev_count <500000
 order by profit desc;
- 
+*/
+
+/*
+Jeremiah's
 SELECT apple.name AS apple_apps,
 	android.name AS android_apps,
 CAST(2500*(12*(1+(2*round(apple.rating/5,1)*5)) + 12*(1+(2*round(android.rating/5,1)*5))) -
@@ -65,3 +74,13 @@ INNER JOIN play_store_apps AS android
 	ON apple.name = android.name
 WHERE android.review_count + CAST(apple.review_count AS int) < 50000
 ORDER BY profit DESC;
+*/
+
+
+/*
+Project Plan: 
+1. Price range per app - make sure we don't have any duplicates
+2. Share/Talk about APP ANNIE 2020 report for ideas and additional information to use in our presentation...create categories based 
+on reports table of contents. Clean our data to show the financials based on those parameters.
+
+*/
