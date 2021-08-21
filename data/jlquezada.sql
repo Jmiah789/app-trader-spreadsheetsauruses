@@ -161,7 +161,7 @@ SELECT *,
 		ELSE 1 END AS expected_app_lifestpan_years
 FROM both_stores_avg_rating
 WHERE total_price IS NOT NULL
-ORDER BY apple_genre DESC;
+ORDER BY apple_genre DESC;    
 
 
 
