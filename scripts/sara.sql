@@ -32,5 +32,5 @@ SELECT *,
 		CASE WHEN avg_rating_rounded > 0 THEN ((avg_rating_rounded * 2) +1)
 		ELSE 1 END AS expected_app_lifestpan_years
 FROM both_stores_avg_rating
-WHERE app_genre = 'Games'
+WHERE app_genre = 'Games' AND avg_rating IS NOT NULL 
 ORDER BY investment_cost DESC;
