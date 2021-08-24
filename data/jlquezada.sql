@@ -107,7 +107,8 @@ on reports table of contents. Clean our data to show the financials based on tho
 
 WITH both_stores_data AS (
 		SELECT DISTINCT apple.name, apple.price AS apple_purchase_cost, android.price AS android_purchase_cost, 
-		CAST(apple.price AS money) + CAST(android.price AS money) AS total_price, 
+		CAST(apple.price AS money) + CAST(android.price AS money) AS total_price,
+		CAST(apple.review_count AS numeric) + CAST(android.review_count AS numeric) as reviews,
  		ROUND(((apple.rating + android.rating)/2),2) AS avg_rating, 
  		apple.primary_genre AS apple_genre, android.genres AS android_genre
 FROM app_store_apps AS apple
@@ -117,51 +118,47 @@ ON apple.name = android.name),
 investment_cost AS (
 		SELECT *, 
 		CASE WHEN total_price > '1' THEN total_price * '10000'
-		ELSE '1000' END AS investment_cost
+		ELSE '10000' END AS investment_cost
 		FROM both_stores_data),
-
-/*profit AS (
-		SELECT
-		revenue,
-		CASE WHEN apple.price > 1 THEN (apple.price * 10000)
-			else 10000 end +
-		Case WHEN CAST(REPLACE (android.price, '$','') AS numeric) > 1 THEN (CAST(REPLACE (android.price, '$','') AS numeric) * 10000)
-			ELSE 10000 END as initial_cost, 1000 * case when 12*(1+(2*round(apple.rating/5,1)*5)) > 12*(1+(2*round(android.rating/5,1)*5))
-			then 12*(1+(2*round(apple.rating/5,1)*5))
-			else 12*(1+(2*round(android.rating/5,1)*5)) END AS recurring_cost,
-		CAST(2500*(12*(1+(2*round(apple.rating/5,1)*5)) + 12*(1+(2*round(android.rating/5,1)*5))) -
-		(CASE WHEN apple.price > 1
-			THEN (apple.price * 10000)
-			else 10000 end +
-		Case WHEN CAST(REPLACE (android.price, '$','') AS numeric) > 1
-			THEN (CAST(REPLACE (android.price, '$','') AS numeric) * 10000)
-			ELSE 10000 END) - 1000 * CASE WHEN 12*(1+(2*round(apple.rating/5,1)*5)) > 12*(1+(2*round(android.rating/5,1)*5))
-									THEN 12*(1+(2*round(apple.rating/5,1)*5))
-									ELSE 12*(1+(2*round(android.rating/5,1)*5)) END AS MONEY) AS profit),*/
-	
+		
 
 both_stores_avg_rating AS (
 		SELECT *,
 		CASE WHEN avg_rating BETWEEN 0 AND 0.24 THEN 0
-						WHEN avg_rating BETWEEN 0.25 and 0.74 THEN 0.50
-						WHEN avg_rating BETWEEN 0.75 and 1.24 THEN 1.00
-						WHEN avg_rating BETWEEN 1.25 and 1.74 THEN 1.50
-						WHEN avg_rating BETWEEN 1.75 and 2.24 THEN 2.00
-						WHEN avg_rating BETWEEN 2.25 and 2.74 THEN 2.50
-						WHEN avg_rating BETWEEN 2.75 and 3.24 THEN 3.00
-						WHEN avg_rating BETWEEN 3.25 and 3.74 THEN 3.50
-						WHEN avg_rating BETWEEN 3.75 and 4.24 THEN 4.00
-						WHEN avg_rating BETWEEN 4.25 and 4.74 THEN 4.50
-					    WHEN avg_rating BETWEEN 4.75 and 5.00 THEN 5.00
- 						END as avg_rating_rounded
-			FROM investment_cost)
-			
+			 WHEN avg_rating BETWEEN 0.25 and 0.74 THEN 0.50
+			 WHEN avg_rating BETWEEN 0.75 and 1.24 THEN 1.00
+			 WHEN avg_rating BETWEEN 1.25 and 1.74 THEN 1.50
+			 WHEN avg_rating BETWEEN 1.75 and 2.24 THEN 2.00
+			 WHEN avg_rating BETWEEN 2.25 and 2.74 THEN 2.50
+			 WHEN avg_rating BETWEEN 2.75 and 3.24 THEN 3.00
+			 WHEN avg_rating BETWEEN 3.25 and 3.74 THEN 3.50
+			 WHEN avg_rating BETWEEN 3.75 and 4.24 THEN 4.00
+			 WHEN avg_rating BETWEEN 4.25 and 4.74 THEN 4.50
+			 WHEN avg_rating BETWEEN 4.75 and 5.00 THEN 5.00
+ 		END as avg_rating_rounded
+		FROM investment_cost),
+		
+life_exp AS (SELECT *,
+		CASE WHEN avg_rating_rounded > 0 THEN ((((avg_rating_rounded * 2) +1)*2)*12)
+		ELSE 1 END AS lifespan_months_both
+FROM both_stores_avg_rating),
+
+Revenue_Both AS (SELECT *,
+	CASE WHEN lifespan_months_both > 0 THEN lifespan_months_both*2500
+	ELSE 1 END AS revenue
+FROM life_exp),
+
+Recurring_cost AS(SELECT *,
+	CASE WHEN avg_rating_rounded > 0 THEN (((((avg_rating_rounded) +1)*2)*12)*1000)
+		ELSE 1 END AS ad_cost
+FROM Revenue_Both)
+
 SELECT *,
-		CASE WHEN avg_rating_rounded > 0 THEN ((avg_rating_rounded * 2) +1)
-		ELSE 1 END AS expected_app_lifestpan_years
-FROM both_stores_avg_rating
-WHERE total_price IS NOT NULL
-ORDER BY apple_genre DESC;  
+	CASE WHEN ad_cost > 0 THEN (revenue - CAST(investment_cost AS numeric)- ad_cost)
+		ELSE 1 END AS Profit
+FROM Recurring_cost
+WHERE total_price IS NOT NULL AND reviews <50000
+ORDER BY Profit DESC; 
 
 
 
