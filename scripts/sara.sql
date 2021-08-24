@@ -2,7 +2,8 @@ WITH both_stores_data AS (
 		SELECT DISTINCT apple.name, apple.price AS apple_purchase_cost, android.price AS android_purchase_cost,
 		CAST(apple.price AS money) + CAST(android.price AS money) AS total_cost,
  		ROUND(((apple.rating + android.rating)/2),2) AS avg_rating,
- 		apple.primary_genre AS app_genre, android.genres AS android_genre
+ 		apple.primary_genre AS app_genre, android.genres AS android_genre,
+		CAST(apple.review_count AS int) AS app_review_count, CAST(android.review_count AS int) AS and_review_count
 FROM app_store_apps AS apple
 LEFT JOIN play_store_apps AS android
 ON apple.name = android.name),
@@ -32,5 +33,6 @@ SELECT *,
 		CASE WHEN avg_rating_rounded > 0 THEN ((avg_rating_rounded * 2) +1)
 		ELSE 1 END AS expected_app_lifestpan_years
 FROM both_stores_avg_rating
-WHERE app_genre = 'Games' AND avg_rating IS NOT NULL 
+WHERE app_genre = 'Games' AND avg_rating IS NOT NULL AND app_review_count > 100000
+	AND and_review_count > 100000
 ORDER BY investment_cost DESC;
