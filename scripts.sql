@@ -81,11 +81,28 @@ WHERE cast(apple.review_count as int) + android.review_count <= 500000
 ORDER BY profit DESC
 ) as subquery) as subquery2
 where android_category = 'GAME' OR apple_genre = 'Games'
+LIMIT 75;
 
 
 
 
+--review count and content rating
 
+
+SELECT apple.name AS app_name, apple.content_rating as apple_rating, android.content_rating AS android_content,
+cast(apple.review_count AS int) AS apple_review_count, android.review_count AS android_review_count
+FROM app_store_apps AS apple
+inner join play_store_apps as android
+	on apple.name = android.name;
+
+SELECT apple.content_rating as apple_rating,
+	round(avg(cast(apple.review_count AS int)),0) AS apple_review_count,
+ 	round(avg(android.review_count),0) AS android_review_count 
+FROM app_store_apps AS apple
+inner join play_store_apps as android
+	on apple.name = android.name
+GROUP BY apple_rating
+Order BY android_review_count DESC;
 
 
 --Vamsi
