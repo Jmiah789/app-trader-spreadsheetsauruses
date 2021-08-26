@@ -1,5 +1,10 @@
 select *
-from play_store_apps;
+from app_store_apps
+where name = 'The Guardian';
+
+select *
+from play_store_apps
+where name = 'The Guardian';
 
 -- sql table
 
@@ -35,11 +40,14 @@ where weighted_rev_count <500000
 order by profit desc, weighted_rev_count desc;
 
 
+
 -- get rid of duplicates
+
 
 WITH sql_table as
 (SELECT
-	apple_apps as app_in_both_stores, trunc(weighted_rev_count) as weighted_rev_count, cast(lifespan_mos as int) as lifespan_mos, 
+	apple_apps as app_in_both_stores, content_rating, genre, trunc(weighted_avg_rating,1) as weighted_avg_rating,
+    trunc(weighted_rev_count) as weighted_rev_count, cast(lifespan_mos as int) as lifespan_mos, 
 	cast(gross as money) as gross, cast(ad_cost as money) as ad_cost, cast(apple_purchase_cost as money) as apple_purchase_cost, 
 	cast(android_purchase_cost as money) as android_purchase_cost, 
 	cast(gross - ad_cost - apple_purchase_cost - android_purchase_cost as money) as profit
@@ -47,11 +55,20 @@ FROM
 (SELECT 
 	apple.name AS apple_apps, coalesce(apple.rating,0) as apple_rating, apple.price as apple_price, 
 	android.name AS android_apps, coalesce(android.rating,0) as android_rating, cast(replace(android.price,'$','') as numeric) as android_price,
+    apple.content_rating as content_rating, apple.primary_genre as genre,
+ 
+    ((cast(apple.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
+	* apple.rating)
+	  				+
+	((cast(android.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
+	* android.rating) as weighted_avg_rating, 
+	  
  	((cast(apple.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
  	* cast(apple.review_count as numeric))
  					+
  	((cast(android.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
  	* cast(android.review_count as numeric)) as weighted_rev_count,
+ 
  	((round((apple.rating/5),1)*120)+12) + ((round((android.rating/5),1)*120)+12) as lifespan_mos,
 	(((round((apple.rating/5),1)*120)+12)*2500) + (((round((android.rating/5),1)*120)+12)*2500) as gross, 
 	case when ((round((apple.rating/5),1)*120)+12) > ((round((android.rating/5),1)*120)+12) then ((round((apple.rating/5),1)*120)+12) * 1000
@@ -68,7 +85,7 @@ where apple.name is not null and apple.rating is not null and android.name is no
 where weighted_rev_count <500000
 order by profit desc, weighted_rev_count desc)
 
-SELECT app_in_both_stores, weighted_rev_count, lifespan_mos, gross, ad_cost, apple_purchase_cost, android_purchase_cost, profit
+SELECT app_in_both_stores, genre, content_rating, weighted_avg_rating, weighted_rev_count, lifespan_mos, gross, ad_cost, apple_purchase_cost, android_purchase_cost, profit
 FROM
 (SELECT 
 	row_number() over (partition by app_in_both_stores) as row_number, 
@@ -82,12 +99,18 @@ ORDER BY profit desc;
 
 WITH sql_table as 
 (SELECT
-	apple_apps as app_in_both_stores, trunc(weighted_rev_count) as weighted_rev_count, cast(lifespan_mos as int) as lifespan_mos, 
+	apple_apps as app_in_both_stores, genre, content_rating, trunc(weighted_avg_rating,1) as weighted_avg_rating, trunc(weighted_rev_count) as weighted_rev_count, cast(lifespan_mos as int) as lifespan_mos, 
 	gross, ad_cost, apple_purchase_cost, android_purchase_cost, gross - ad_cost - apple_purchase_cost - android_purchase_cost as profit
 FROM
 (SELECT 
 	apple.name AS apple_apps, coalesce(apple.rating,0) as apple_rating, apple.price as apple_price, 
 	android.name AS android_apps, coalesce(android.rating,0) as android_rating, cast(replace(android.price,'$','') as numeric) as android_price,
+    apple.content_rating as content_rating, apple.primary_genre as genre,
+    ((cast(apple.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
+	* apple.rating)
+	  				+
+	((cast(android.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
+	* android.rating) as weighted_avg_rating,
  	((cast(apple.review_count as numeric) / (cast(apple.review_count as numeric) + cast(android.review_count as numeric)))
  	* cast(apple.review_count as numeric))
  					+
@@ -109,7 +132,7 @@ where apple.name is not null and apple.rating is not null and android.name is no
 where weighted_rev_count <500000
 order by profit desc, weighted_rev_count desc)
 
-SELECT app_in_both_stores, weighted_rev_count, lifespan_mos, gross, ad_cost, apple_purchase_cost, android_purchase_cost, profit
+SELECT app_in_both_stores, genre, content_rating, weighted_avg_rating, weighted_rev_count, lifespan_mos, gross, ad_cost, apple_purchase_cost, android_purchase_cost, profit
 FROM
 (SELECT 
 	row_number() over (partition by app_in_both_stores) as row_number, 
